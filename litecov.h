@@ -26,123 +26,128 @@ limitations under the License.
 
 #define COVERAGE_SIZE 0
 
-enum CovType {
-  COVTYPE_BB,
-  COVTYPE_EDGE
+enum CovType
+{
+    COVTYPE_BB,
+    COVTYPE_EDGE
 };
 
-struct CmpCoverageRecord {
-  bool ignored;
-  int width;
-  int match_width;
-  size_t bb_address; // for debugging
-  size_t bb_offset;
-  size_t cmp_offset;
-  size_t instrumentation_offset;
-  size_t instrumentation_size;
-  size_t match_width_offset;
+struct CmpCoverageRecord
+{
+    bool ignored;
+    int width;
+    int match_width;
+    size_t bb_address; // for debugging
+    size_t bb_offset;
+    size_t cmp_offset;
+    size_t instrumentation_offset;
+    size_t instrumentation_size;
+    size_t match_width_offset;
 };
 
-class ModuleCovData {
+class ModuleCovData
+{
 public:
-  ModuleCovData();
-  void ClearInstrumentationData();
+    ModuleCovData();
+    void ClearInstrumentationData();
 
-  unsigned char *coverage_buffer_remote;
+    unsigned char *coverage_buffer_remote;
 
-  size_t coverage_buffer_size;
-  size_t coverage_buffer_next;
+    size_t coverage_buffer_size;
+    size_t coverage_buffer_next;
 
-  std::set<uint64_t> collected_coverage;
-  std::set<uint64_t> ignore_coverage;
+    std::set<uint64_t> collected_coverage;
+    std::set<uint64_t> ignore_coverage;
 
-  // maps offset in the coverage buffer to
-  // offset of the basic block / edge code
-  std::unordered_map<size_t, uint64_t> buf_to_coverage;
+    // maps offset in the coverage buffer to
+    // offset of the basic block / edge code
+    std::unordered_map<size_t, uint64_t> buf_to_coverage;
 
-  // maps coverage code (e.g. a bb offset)
-  // to offset in the instrumented buffer
-  // of the corresponding instrumentation
-  std::unordered_map<uint64_t, size_t> coverage_to_inst;
+    // maps coverage code (e.g. a bb offset)
+    // to offset in the instrumented buffer
+    // of the corresponding instrumentation
+    std::unordered_map<uint64_t, size_t> coverage_to_inst;
 
-  bool has_remote_coverage;
+    bool has_remote_coverage;
 
-  void ClearCmpCoverageData();
-  std::unordered_map<size_t, CmpCoverageRecord*> buf_to_cmp;
-  std::unordered_map<uint64_t, CmpCoverageRecord*> coverage_to_cmp;
+    void ClearCmpCoverageData();
+    std::unordered_map<size_t, CmpCoverageRecord *> buf_to_cmp;
+    std::unordered_map<uint64_t, CmpCoverageRecord *> coverage_to_cmp;
 };
 
-class LiteCov : public TinyInst {
+class LiteCov : public TinyInst
+{
 public:
-  virtual void Init(int argc, char **argv) override;
+    virtual void Init(int argc, char **argv) override;
 
-  void GetCoverage(Coverage &coverage, bool clear_coverage);
-  void ClearCoverage();
+    void GetCoverage(Coverage &coverage, bool clear_coverage);
+    void ClearCoverage();
 
-  // note: this does not affect already collected coverage
-  void IgnoreCoverage(Coverage &coverage);
+    // note: this does not affect already collected coverage
+    void IgnoreCoverage(Coverage &coverage);
 
-  bool HasNewCoverage();
+    bool HasNewCoverage();
 
 protected:
-  virtual void OnModuleInstrumented(ModuleInfo *module) override;
-  virtual void OnModuleUninstrumented(ModuleInfo *module) override;
+    virtual void OnModuleInstrumented(ModuleInfo *module) override;
+    virtual void OnModuleUninstrumented(ModuleInfo *module) override;
 
-  virtual void OnProcessExit() override;
+    virtual void OnProcessExit() override;
 
-  virtual void OnModuleEntered(ModuleInfo *module, size_t entry_address) override;
-  virtual bool OnException(Exception *exception_record) override;
+    virtual void OnModuleEntered(ModuleInfo *module, size_t entry_address) override;
+    virtual bool OnException(Exception *exception_record) override;
 
-  virtual void InstrumentBasicBlock(ModuleInfo *module, size_t bb_address) override;
-  virtual void InstrumentEdge(ModuleInfo *previous_module,
-                              ModuleInfo *next_module,
-                              size_t previous_address,
-                              size_t next_address) override;
-  virtual InstructionResult InstrumentInstruction(ModuleInfo *module,
-                                                  Instruction &inst,
-                                                  size_t bb_address,
-                                                  size_t instruction_address) override;
+    virtual void InstrumentBasicBlock(ModuleInfo *module, size_t bb_address) override;
+    virtual void InstrumentEdge(ModuleInfo *previous_module,
+                                ModuleInfo *next_module,
+                                size_t previous_address,
+                                size_t next_address) override;
+    virtual InstructionResult InstrumentInstruction(ModuleInfo *module,
+                                                    Instruction &inst,
+                                                    size_t bb_address,
+                                                    size_t instruction_address) override;
 
-  void EmitCoverageInstrumentation(ModuleInfo *module, uint64_t coverage_code);
-  void EmitCoverageInstrumentation(ModuleInfo *module,
-                                    size_t bit_address,
-                                    size_t mov_address);
-  void ClearCoverageInstrumentation(ModuleInfo *module, uint64_t coverage_code);
+    void EmitCoverageInstrumentation(ModuleInfo *module, uint64_t coverage_code);
+    void EmitCoverageInstrumentation(ModuleInfo *module,
+                                     size_t bit_address,
+                                     size_t mov_address);
+    void ClearCoverageInstrumentation(ModuleInfo *module, uint64_t coverage_code);
 
-  void NopCovInstructions(ModuleInfo *module, size_t code_offset);
-  void NopCmpCovInstructions(ModuleInfo *module,
-                             CmpCoverageRecord &cmp_record,
-                             int matched_width);
+    void NopCovInstructions(ModuleInfo *module, size_t code_offset);
+    void NopCmpCovInstructions(ModuleInfo *module,
+                               CmpCoverageRecord &cmp_record,
+                               int matched_width);
 
-  // compute a unique code for a basic block
-  // this is just an offset into the module
-  uint64_t GetBBCode(ModuleInfo *module, size_t bb_address);
+    // compute a unique code for a basic block
+    // this is just an offset into the module
+    uint64_t GetBBCode(ModuleInfo *module, size_t bb_address);
 
-  // compute a unique code for a basic block
-  // this has address1 offset in lower 32 bits and
-  // address2 offset in higher 32 bits
-  uint64_t GetEdgeCode(ModuleInfo *module, size_t edge_address1, size_t edge_address2);
+    // compute a unique code for a basic block
+    // this has address1 offset in lower 32 bits and
+    // address2 offset in higher 32 bits
+    uint64_t GetEdgeCode(ModuleInfo *module, size_t edge_address1, size_t edge_address2);
 
-  ModuleCovData *GetDataByRemoteAddress(size_t address);
-  void HandleBufferWriteException(ModuleCovData *data);
+    ModuleCovData *GetDataByRemoteAddress(size_t address);
+    void HandleBufferWriteException(ModuleCovData *data);
 
-  void ClearCoverage(ModuleCovData *data);
-  void ClearRemoteBuffer(ModuleCovData *data);
+    void ClearCoverage(ModuleCovData *data);
+    void ClearRemoteBuffer(ModuleCovData *data);
 
-  void CollectCoverage(ModuleCovData *data);
-  void CollectCoverage();
+    void CollectCoverage(ModuleCovData *data);
+    void CollectCoverage();
 
-  uint64_t GetCmpCode(size_t bb_offset, size_t cmp_offset, int bits_match);
-  bool IsCmpCoverageCode(uint64_t code);
-  void ClearCmpCoverageInstrumentation(ModuleInfo *module, uint64_t coverage_code);
-  void CollectCmpCoverage(ModuleCovData *data, size_t buffer_offset, char buffer_value);
-  bool ShouldInstrumentSub(ModuleInfo *module,
-                           Instruction& cmp_instr,
-                           size_t instruction_address);
+    uint64_t GetCmpCode(size_t bb_offset, size_t cmp_offset, int bits_match);
+    bool IsCmpCoverageCode(uint64_t code);
+    void ClearCmpCoverageInstrumentation(ModuleInfo *module, uint64_t coverage_code);
+    void CollectCmpCoverage(ModuleCovData *data, size_t buffer_offset, char buffer_value);
+    bool ShouldInstrumentSub(ModuleInfo *module,
+                             Instruction &cmp_instr,
+                             size_t instruction_address);
+
 private:
-  CovType coverage_type;
-  bool compare_coverage;
-  size_t skip_cov_instruction_br_off;
+    CovType coverage_type;
+    bool compare_coverage;
+    size_t skip_cov_instruction_br_off;
 };
 
 #endif // LITECOV_H
