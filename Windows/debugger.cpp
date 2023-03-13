@@ -2090,6 +2090,7 @@ void Debugger::Init(int argc, char **argv)
             FATAL("Unknown calling convention");
     }
 
+    sinkhole_stds = GetBinaryOption("-sinkhole", argc, argv, false);
     force_dep = GetBinaryOption("-force_dep", argc, argv, false);
     //以上参数主要负责针对指定目标函数进行fuzz，针对目标函数运行前后下断插入回调保存运行环境多次迭代调用，搜集函数运行前后的覆盖率差值
 
